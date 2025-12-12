@@ -1,0 +1,60 @@
+[
+    {
+        "questions": [
+            "What is in the menu?",
+            "Show me the menu",
+            "What do you serve?",
+            "Can I see the food list?"
+        ],
+        "answer": "We serve a variety of authentic cuisine including Starters, Rice Bowls, Curries, and Desserts. Our specialties include Hyderabadi Biryani and Grilled Salmon."
+    },
+    {
+        "questions": [
+            "What are the rice dishes?",
+            "Do you have fried rice?",
+            "List the rice items",
+            "Do you serve Biryani?"
+        ],
+        "answer": "Our rice selection includes: 1. Chicken Fried Rice ($12), 2. Vegetable Biryani ($10), 3. Jeera Rice ($5), and 4. Shrimp Fried Rice ($14)."
+    },
+    {
+        "questions": [
+            "What is the price of the Chicken Curry?",
+            "How much is the Chicken Curry?",
+            "Cost of chicken curry"
+        ],
+        "answer": "The Classic Chicken Curry is priced at $15.50."
+    },
+    {
+        "questions": [
+            "What is the price of the Grilled Salmon?",
+            "How much is the salmon?",
+            "Fish price"
+        ],
+        "answer": "Our Signature Grilled Salmon is $22.00."
+    },
+    {
+        "questions": [
+            "Do you have vegetarian options?",
+            "Is there vegan food?",
+            "Veg menu"
+        ],
+        "answer": "Yes! We have a dedicated vegetarian section including Paneer Tikka, Vegetable Stir-fry, and Dal Tadka."
+    },
+    {
+        "questions": [
+            "What are your opening hours?",
+            "When do you open?",
+            "Are you open for lunch?"
+        ],
+        "answer": "We are open daily for Lunch (11:00 AM - 3:00 PM) and Dinner (6:00 PM - 10:30 PM)."
+    },
+    {
+        "questions": [
+            "How do I book a table?",
+            "Make a reservation",
+            "Book a table for two"
+        ],
+        "answer": "You can book a table by calling us at +1-555-0199 or clicking the 'Reserve' button on our website."
+    }
+]
