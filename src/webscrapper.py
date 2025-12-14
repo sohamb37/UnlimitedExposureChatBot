@@ -30,8 +30,10 @@ except AttributeError:
     # Fallback if the structure is raw
     data_to_save = crawl_result
 
-with open("/home/paritosh/hybrid_bot/data/scraped_data.json", "w", encoding="utf-8") as f:
-    # default=str helps serialize objects that JSON doesn't know how to handle
-    json.dump(data_to_save, f, indent=4, ensure_ascii=False, default=str)
+# with open("/home/paritosh/hybrid_bot/data/scraped_data.json", "w", encoding="utf-8") as f:
+#     # default=str helps serialize objects that JSON doesn't know how to handle
+#     json.dump(data_to_save, f, indent=4, ensure_ascii=False, default=str)
+
+# save to vector db as json
 
 print("Saved data to scraped_data.json")

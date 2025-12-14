@@ -1,129 +1,99 @@
 import json
+import os
+import pickle
 import numpy as np
-from openai import OpenAI
-# from config import DATA_FILE, OPENAI_API_KEY
+from llm_gateway import UnifiedLLMClient
+from config import settings
 
-# Use 'text-embedding-3-small' for a good balance of cost/speed/performance
-# or 'text-embedding-3-large' for higher accuracy.
-EMBEDDING_MODEL = "text-embedding-3-small"
-
-class SemanticMatcher:
+class MatcherAPI:
     def __init__(self):
-        print("Initializing OpenAI Client...")
-        self.client = OpenAI(api_key=OPENAI_API_KEY)
-        
-        self.kb_questions = [] # All possible user questions from JSON
-        self.kb_answers = []   # Mapping questions to answers
-        self.kb_embeddings = None
-        
-        self.load_data()
+        self.client = UnifiedLLMClient()
+        self.faq_data = self._load_faq()
+        self.faq_embeddings = []
+        # Define the cache path in the data folder
+        self.embeddings_cache_path = os.path.join("data", "faq_embeddings.pkl")
+        self._precompute_embeddings()
 
-    def get_embedding(self, text):
-        """Fetches embedding for a single string or a list of strings."""
-        try:
-            # 1. Sanitize Input (Handle both List and String)
-            if isinstance(text, list):
-                # If it's a list, clean every string inside it
-                text = [t.replace("\n", " ") for t in text]
-            else:
-                # If it's a single string, clean it directly
-                text = text.replace("\n", " ")
-
-            # 2. Call OpenAI API
-            response = self.client.embeddings.create(
-                input=text, 
-                model=EMBEDDING_MODEL
-            )
-            
-            # 3. Return Logic
-            # If input was a list, return list of embeddings
-            if isinstance(text, list):
-                return [data.embedding for data in response.data]
-            
-            # If input was a string, return single embedding
-            return response.data[0].embedding
-            
-        except Exception as e:
-            print(f"Error generating embedding: {e}")
+    def _load_faq(self):
+        if not os.path.exists(settings.FAQ_FILE_PATH):
             return []
+        with open(settings.FAQ_FILE_PATH, 'r', encoding='utf-8') as f:
+            return json.load(f)
 
-    def load_data(self):
-        """Loads JSON and pre-computes embeddings in batches."""
+    def _precompute_embeddings(self):
+        """
+        Loads embeddings for all FAQ questions.
+        Checks for a cached pickle file first to avoid re-calculating on every restart.
+        """
+        cache_valid = False
+        
+        # Check if cache exists and is newer than the source FAQ file
+        if os.path.exists(self.embeddings_cache_path) and os.path.exists(settings.FAQ_FILE_PATH):
+            faq_mtime = os.path.getmtime(settings.FAQ_FILE_PATH)
+            cache_mtime = os.path.getmtime(self.embeddings_cache_path)
+            if cache_mtime > faq_mtime:
+                cache_valid = True
+
+        if cache_valid:
+            print(f"⚙️  Loading FAQ embeddings from cache: {self.embeddings_cache_path}")
+            try:
+                with open(self.embeddings_cache_path, 'rb') as f:
+                    self.faq_embeddings = pickle.load(f)
+                
+                # Sanity check: Ensure cache matches current data length
+                if len(self.faq_embeddings) == len(self.faq_data):
+                    print("✅ Matcher Ready (Loaded from Cache).")
+                    return
+                else:
+                    print("⚠️  Cache mismatch (data length differs). Recomputing...")
+            except Exception as e:
+                print(f"⚠️  Error loading cache: {e}. Recomputing...")
+
+        # If cache is missing, stale, or invalid, compute from scratch
+        print("⚙️  Computing FAQ embeddings (Cache miss or stale)...")
+        self.faq_embeddings = [] 
+        
+        for item in self.faq_data:
+            # We embed the first question variation as the 'anchor'
+            # For better accuracy, you could embed all variations.
+            anchor_question = item['questions'][0]
+            vector = self.client.get_embedding(anchor_question)
+            self.faq_embeddings.append(vector)
+            
+        # Save the new embeddings to cache
         try:
-            with open(DATA_FILE, 'r') as f:
-                data = json.load(f)
-            
-            # Flatten the structure
-            for entry in data:
-                for q in entry["questions"]:
-                    self.kb_questions.append(q)
-                    self.kb_answers.append(entry["answer"])
-            
-            total_questions = len(self.kb_questions)
-            print(f"Encoding {total_questions} dictionary entries with OpenAI...")
-            
-            # --- BATCHING LOGIC STARTS HERE ---
-            batch_size = 500  # Safe number for OpenAI tiers (can go up to 2048)
-            all_embeddings = []
-
-            # Loop from 0 to total_questions, stepping by batch_size
-            for i in range(0, total_questions, batch_size):
-                # Create a slice (chunk) of the list
-                batch = self.kb_questions[i : i + batch_size]
-                
-                print(f"Processing batch {i} to {i + len(batch)}...")
-                
-                # Send just this chunk to the API
-                batch_embeddings = self.get_embedding(batch)
-                
-                # Add results to our main list
-                if batch_embeddings:
-                    all_embeddings.extend(batch_embeddings)
-            
-            # Convert the full list to numpy array at the end
-            self.kb_embeddings = np.array(all_embeddings)
-            # ----------------------------------
-            
-            print("Knowledge Base encoded.")
-            
-        except FileNotFoundError:
-            print("⚠️ FAQ file not found. Dictionary matching will be disabled.")
+            # Ensure the directory exists
+            os.makedirs(os.path.dirname(self.embeddings_cache_path), exist_ok=True)
+            with open(self.embeddings_cache_path, 'wb') as f:
+                pickle.dump(self.faq_embeddings, f)
+            print(f"💾 Saved embeddings to cache: {self.embeddings_cache_path}")
         except Exception as e:
-            print(f"⚠️ Error loading KB: {e}")
+            print(f"⚠️  Could not save cache: {e}")
 
-    def find_match(self, user_query):
+        print("✅ Matcher Ready.")
+
+    def _cosine_similarity(self, v1, v2):
+        return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+
+    def find_best_match(self, user_query: str):
         """
-        Returns (best_answer, score).
-        If no data exists, returns (None, 0).
+        Returns (answer, score).
         """
-        if self.kb_embeddings is None or len(self.kb_embeddings) == 0:
+        if not self.faq_data:
             return None, 0.0
 
-        # 1. Get embedding for user query
-        query_embedding = self.get_embedding(user_query)
-        if not query_embedding:
-            return None, 0.0
-        
-        # Convert to numpy array and reshape for matrix multiplication (1, dim)
-        query_vec = np.array(query_embedding).reshape(1, -1)
+        query_vector = self.client.get_embedding(user_query)
+        best_score = -1
+        best_idx = -1
 
-        # 2. Calculate Cosine Similarity
-        # OpenAI embeddings are already normalized to length 1. 
-        # So, Dot Product == Cosine Similarity.
-        # Calculation: (1, dim) • (n_questions, dim).T = (1, n_questions)
-        scores = np.dot(query_vec, self.kb_embeddings.T)[0]
+        for i, faq_vector in enumerate(self.faq_embeddings):
+            score = self._cosine_similarity(query_vector, faq_vector)
+            if score > best_score:
+                best_score = score
+                best_idx = i
 
-        # 3. Find the best score and index
-        best_idx = np.argmax(scores)
-        best_score = scores[best_idx]
+        # Check Threshold
+        if best_score >= settings.FAQ_SIMILARITY_THRESHOLD:
+            return self.faq_data[best_idx], best_score
         
-        return self.kb_answers[best_idx], float(best_score)
-
-if __name__ == "__main__":    
-    sem = SemanticMatcher()
-    query = "what is in the menu?"
-    answer, score = sem.find_match(query)
-        
-    print(f"Match Found: {answer}")
-    print(f"Confidence Score: {score}")
-# print(answer)
+        return None, best_score

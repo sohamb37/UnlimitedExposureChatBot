@@ -1,115 +1,51 @@
-import psycopg2
-from openai import OpenAI
-from config import OPENAI_API_KEY, LLM_MODEL_NAME, DB_CONNECTION_STRING
+from llm_gateway import UnifiedLLMClient
+from matcher_api import MatcherAPI
+from vector_store import VectorStore
+from config import settings
 
-# Use a chat model like 'gpt-4o' or 'gpt-3.5-turbo'
-# Make sure LLM_MODEL_NAME in config.py is set to one of these
-class RAGEngine:
+class LLMEngineAPI:
     def __init__(self):
-        print(f"Initializing RAG Engine with model: {LLM_MODEL_NAME}...")
-        
-        try:
-            # 1. Initialize OpenAI Client
-            self.client = OpenAI(api_key=OPENAI_API_KEY)
-            
-            # 2. Connect to Postgres (Simulated connection based on your request)
-            self.conn = psycopg2.connect(DB_CONNECTION_STRING)
-            
-            print("RAG Engine (OpenAI + PGVector) ready.")
-            
-        except Exception as e:
-            print(f"❌ Error initializing RAG Engine: {e}")
-            self.client = None
+        self.llm_client = UnifiedLLMClient()
+        self.matcher = MatcherAPI()
+        self.vector_db = VectorStore()
 
-    def get_query_embedding(self, text):
-        """Generates embedding for the user's query to match against DB."""
-        text = text.replace("\n", " ")
-        return self.client.embeddings.create(
-            input=[text], 
-            model="text-embedding-3-small"
-        ).data[0].embedding
-
-    def retrieve_context(self, query_embedding, top_k=3):
-        """
-        Retrieves the most relevant text chunks from Postgres.
-        ASSUMPTION: You have a table named 'knowledge_base' with 'content' and 'embedding'.
-        """
-        context_chunks = []
+    def generate_response(self, user_query: str):
+        print(f"\n📨 Received Query: {user_query}")
         
-        # SQL to find nearest neighbors using Cosine Distance (<=>)
-        sql = """
-            SELECT content 
-            FROM knowledge_base 
-            ORDER BY embedding <=> %s::vector 
-            LIMIT %s;
+        # --- STEP 1: Fast & Cheap (FAQ Match) ---
+        match_data, score = self.matcher.find_best_match(user_query)
+        
+        if match_data:
+            print(f"⚡ FAQ Match Found! (Score: {score:.2f})")
+            return match_data['answer']
+        
+        print(f"📉 Low Match Score ({score:.2f}). Switching to RAG...")
+
+        # --- STEP 2: Slow & Smart (RAG) ---
+        # 1. Retrieve context from Postgres
+        retrieved_docs = self.vector_db.search(user_query, limit=3)
+        context_text = "\n\n".join(retrieved_docs)
+
+        if not context_text:
+            return "I apologize, but I don't have enough information to answer that question."
+
+        # 2. Generate Answer with Context
+        system_prompt = """
+        You are a helpful assistant for a business. 
+        Answer the user's question using ONLY the context provided below.
+        If the answer is not in the context, say you don't know.
         """
         
-        try:
-            with self.conn.cursor() as cur:
-                cur.execute(sql, (query_embedding, top_k))
-                rows = cur.fetchall()
-                # Extract just the text content from the rows
-                context_chunks = [row[0] for row in rows]
-        except Exception as e:
-            print(f"⚠️ Database retrieval failed: {e}")
-            
-        return context_chunks
-
-    def generate(self, user_query):
-        """
-        Performs the full RAG pipeline: 
-        Embed Query -> Retrieve Context -> Generate Answer
-        """
-        if not self.client:
-            return "Error: OpenAI client is not initialized."
-
-        # Step 1: Embed the user's question
-        query_vector = self.get_query_embedding(user_query)
+        full_user_prompt = f"Context:\n{context_text}\n\nQuestion: {user_query}"
         
-        # Step 2: Retrieve ranked items from PG Database
-        # We get the top 3 most relevant chunks
-        retrieved_items = self.retrieve_context(query_vector, top_k=3)
-        
-        if not retrieved_items:
-            # Fallback if DB is empty or fails
-            print("No context retrieved. Answering based on general knowledge.")
-            context_str = "No specific context available."
-        else:
-            # Join the chunks into a single string
-            context_str = "\n\n---\n\n".join(retrieved_items)
+        return self.llm_client.generate_text(system_prompt, full_user_prompt)
 
-        # Step 3: Construct the RAG Prompt
-        # We give the LLM the retrieved text and the user's question
-        messages = [
-            {
-                "role": "system", 
-                "content": (
-                    "You are a helpful assistant for a restaurant. "
-                    "Use the following pieces of retrieved context to answer the user's question. "
-                    "If the answer is not in the context, strictly say 'I do not have that information'."
-                )
-            },
-            {
-                "role": "user", 
-                "content": f"Context:\n{context_str}\n\nQuestion: {user_query}"
-            }
-        ]
-        
-        # Step 4: Generate Response via OpenAI
-        try:
-            response = self.client.chat.completions.create(
-                model=LLM_MODEL_NAME, # e.g., "gpt-4o"
-                messages=messages,
-                temperature=0.3, # Keep it low for factual grounding
-                max_tokens=512
-            )
-            return response.choices[0].message.content
-            
-        except Exception as e:
-            return f"Error generating response: {e}"
-
-# --- usage example ---
+# Test execution
 if __name__ == "__main__":
-    rag = RAGEngine()
-    answer = rag.generate("What is the return policy?")
-    print(answer)
+    engine = LLMEngineAPI()
+    
+    # Test 1: Should hit FAQ (if configured)
+    print("Response:", engine.generate_response("What time do you open?"))
+    
+    # Test 2: Should hit RAG
+    print("Response:", engine.generate_response("Tell me about the history of the founder."))
