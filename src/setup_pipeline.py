@@ -10,9 +10,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from config import settings
 from pypdf import PdfReader
 from docx import Document
-from llm_gateway import UnifiedLLMClient
-from vector_store import VectorStore
-from webscraper import WebScraper
+from src.llm_gateway import UnifiedLLMClient
+from src.vector_store import VectorStore
+from src.webscraper import WebScraper
 
 # --- HELPER: Read Files ---
 def extract_text_from_file(filepath):
@@ -100,27 +100,53 @@ def run_pipeline():
         print("❌ Database is empty. Cannot generate FAQ.")
         return
 
-    # Limit context for generation to avoid huge costs/errors
-    # 100k chars is approx 25k tokens. 
-    context_slice = full_knowledge[:100000] 
+    # Optimization: Increased context window significantly (approx 112k tokens).
+    # Since this is a one-time setup cost, we prioritize comprehensive coverage
+    # to reduce recurring RAG costs in production.
+    context_slice = full_knowledge[:450000]
 
     print("🧠 Generating FAQ.json via LLM (this may take a moment)...")
     system_prompt = """
-    Generate a FAQ JSON list based on the text provided.
-    Format: [{"questions": ["..."], "answer": "..."}]
-    Create comprehensive answers.
+    You are an expert customer support architect. Your goal is to create a robust FAQ database from the provided text.
+
+    CRITICAL INSTRUCTIONS:
+    1. **Exhaustive Extraction:** Analyze the text deeply. Create a Q&A pair for every distinct fact, service, price, policy, or feature found. Do not summarize the whole document into one answer; break it down.
+    2. **Question Diversity:** For every Answer, generate 5 to 10 question variations. Mix short keywords (e.g., "Pricing"), natural questions ("How much is it?"), and specific scenarios ("Cost for enterprise plan?"). This is vital for semantic matching.
+    3. **Answer Quality:** Answers must be polite, unambiguous, and self-contained. Never reference "the text" or "above/below". Assume the user only sees this one answer.
+    4. **Output Format:** Return valid JSON. Wrap the list of FAQs in a root object with the key "faqs".
+    
+    Structure:
+    {
+        "faqs": [
+            {
+                "questions": ["variant 1", "variant 2", "variant 3", ...],
+                "answer": "The specific, polite answer."
+            }
+        ]
+    }
     """
     
     response = llm.generate_text(
         system_prompt, 
-        f"Content Source:\n{context_slice}", 
+        f"Content Source:\n{context_slice}",
+        temperature=0.1, # Low temperature for factual/structural consistency
         json_mode=True
     )
     
     try:
         clean_json = response.replace("```json", "").replace("```", "").strip()
-        faq_data = json.loads(clean_json)
+        json_output = json.loads(clean_json)
         
+        # Robust Parsing: Handle both wrapped object (preferred) and direct list (fallback)
+        if isinstance(json_output, dict) and "faqs" in json_output:
+            faq_data = json_output["faqs"]
+        elif isinstance(json_output, list):
+            faq_data = json_output
+        else:
+            # Last resort if the key isn't "faqs" but it's a dictionary
+            print("⚠️ Warning: JSON structure unexpected, attempting to extract values...")
+            faq_data = list(json_output.values())[0] if json_output else []
+
         # Calculate path to data folder (root/data)
         data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
         os.makedirs(data_dir, exist_ok=True)

@@ -1,7 +1,7 @@
 import psycopg2
 from psycopg2.extras import execute_values
 from config import settings
-from llm_gateway import UnifiedLLMClient
+from src.llm_gateway import UnifiedLLMClient
 
 class VectorStore:
     def __init__(self):

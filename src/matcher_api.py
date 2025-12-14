@@ -2,7 +2,7 @@ import json
 import os
 import pickle
 import numpy as np
-from llm_gateway import UnifiedLLMClient
+from src.llm_gateway import UnifiedLLMClient
 from config import settings
 
 class MatcherAPI:

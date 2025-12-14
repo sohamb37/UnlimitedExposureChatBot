@@ -1,60 +1,102 @@
 [
     {
         "questions": [
-            "What is in the menu?",
-            "Show me the menu",
-            "What do you serve?",
-            "Can I see the food list?"
+            "What is RustCheck?",
+            "How does RustCheck work?",
+            "Tell me about RustCheck",
+            "What does RustCheck do?",
+            "Explain RustCheck services"
         ],
-        "answer": "We serve a variety of authentic cuisine including Starters, Rice Bowls, Curries, and Desserts. Our specialties include Hyderabadi Biryani and Grilled Salmon."
+        "answer": "RustCheck is Canada's original rust-protection service, using a thin, penetrating formula to protect vehicles from rust and corrosion."
     },
     {
         "questions": [
-            "What are the rice dishes?",
-            "Do you have fried rice?",
-            "List the rice items",
-            "Do you serve Biryani?"
+            "What services does RustCheck offer?",
+            "Tell me about RustCheck services",
+            "What are RustCheck's main services?",
+            "What does RustCheck provide?",
+            "RustCheck service details"
         ],
-        "answer": "Our rice selection includes: 1. Chicken Fried Rice ($12), 2. Vegetable Biryani ($10), 3. Jeera Rice ($5), and 4. Shrimp Fried Rice ($14)."
+        "answer": "RustCheck offers two main types of protection: RustCheck Original Formula for upper body panels and Coat & Protect for the undercarriage."
     },
     {
         "questions": [
-            "What is the price of the Chicken Curry?",
-            "How much is the Chicken Curry?",
-            "Cost of chicken curry"
+            "Where can I find a RustCheck dealer?",
+            "RustCheck dealer locations",
+            "Find a RustCheck dealer near me",
+            "RustCheck locations in Canada",
+            "How to locate a RustCheck dealer?"
         ],
-        "answer": "The Classic Chicken Curry is priced at $15.50."
+        "answer": "You can find a RustCheck dealer near you using our online dealer locator by entering your city or postal code."
     },
     {
         "questions": [
-            "What is the price of the Grilled Salmon?",
-            "How much is the salmon?",
-            "Fish price"
+            "How often should I get RustCheck treatments?",
+            "RustCheck treatment frequency",
+            "How frequently should I apply RustCheck?",
+            "When to reapply RustCheck?",
+            "RustCheck application schedule"
         ],
-        "answer": "Our Signature Grilled Salmon is $22.00."
+        "answer": "For the best protection, we recommend an annual application of RustCheck to prevent rust from forming year after year."
     },
     {
         "questions": [
-            "Do you have vegetarian options?",
-            "Is there vegan food?",
-            "Veg menu"
+            "Does RustCheck have locations across Canada?",
+            "RustCheck locations in Canada",
+            "Is RustCheck available nationwide?",
+            "Where is RustCheck available?",
+            "RustCheck service areas"
         ],
-        "answer": "Yes! We have a dedicated vegetarian section including Paneer Tikka, Vegetable Stir-fry, and Dal Tadka."
+        "answer": "Yes, RustCheck has a nationwide network of certified dealers across Canada, ensuring consistent service standards."
     },
     {
         "questions": [
-            "What are your opening hours?",
-            "When do you open?",
-            "Are you open for lunch?"
+            "What is Coat & Protect?",
+            "Coat & Protect details",
+            "How is Coat & Protect different?",
+            "Tell me about Coat & Protect",
+            "Coat & Protect vs Rust Proofing"
         ],
-        "answer": "We are open daily for Lunch (11:00 AM - 3:00 PM) and Dinner (6:00 PM - 10:30 PM)."
+        "answer": "Coat & Protect is a premium undercarriage treatment with advanced corrosion inhibitors, staying flexible to seal out salt, gravel, and water."
     },
     {
         "questions": [
-            "How do I book a table?",
-            "Make a reservation",
-            "Book a table for two"
+            "Is RustCheck safe for electric vehicles?",
+            "Can RustCheck be used on electric cars?",
+            "RustCheck for electric vehicles",
+            "Is RustCheck suitable for EVs?",
+            "RustCheck and electric vehicle safety"
         ],
-        "answer": "You can book a table by calling us at +1-555-0199 or clicking the 'Reserve' button on our website."
+        "answer": "Yes, RustCheck is safe for electric vehicles, with a non-conductive formula that avoids sensitive components while protecting against corrosion."
+    },
+    {
+        "questions": [
+            "Does RustCheck void my car warranty?",
+            "RustCheck and car warranty",
+            "Will RustCheck affect my warranty?",
+            "Is RustCheck compatible with warranties?",
+            "RustCheck warranty impact"
+        ],
+        "answer": "No, RustCheck does not void your car warranty. It works alongside factory coverage, adding protection in areas not covered by manufacturer warranties."
+    },
+    {
+        "questions": [
+            "How much does Rust Proofing cost in Ontario?",
+            "Rust Proofing price in Ontario",
+            "Cost of RustCheck in Ontario",
+            "RustCheck pricing details",
+            "Rust Proofing cost estimate"
+        ],
+        "answer": "Rust proofing costs vary by vehicle size and type, but RustCheck offers competitive pricing across Ontario. Exact costs may differ by dealer."
+    },
+    {
+        "questions": [
+            "Is RustCheck environmentally safe?",
+            "Environmental impact of RustCheck",
+            "Is RustCheck eco-friendly?",
+            "RustCheck and environmental safety",
+            "RustCheck's environmental credentials"
+        ],
+        "answer": "Yes, RustCheck products are non-toxic, biodegradable, and safe for the environment, meeting environmental standards while effectively preventing rust."
     }
 ]
