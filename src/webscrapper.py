@@ -1,39 +1,40 @@
-from firecrawl import Firecrawl
-import json
+from firecrawl import FirecrawlApp
+from config import settings
 
-# Initialize the Firecrawl App with your API key
-# If self-hosting, you would point this to your local instance
-app = Firecrawl(api_key="fc-07a6b3de972c42f28a29be9a098bc10e")
+class WebScraper:
+    def __init__(self):
+        if not settings.FIRECRAWL_API_KEY:
+            raise ValueError("❌ FIRECRAWL_API_KEY is missing in .env or config.py")
+            
+        self.app = FirecrawlApp(api_key=settings.FIRECRAWL_API_KEY)
 
-url = "https://www.rustcheck.ca/"
+    def scrape_page(self, url: str):
+        """
+        Uses Firecrawl to turn a URL into clean Markdown.
+        """
+        print(f"🔥 Firecrawling: {url} ...")
+        try:
+            # Scrape and get markdown directly
+            scrape_result = self.app.scrape_url(url, params={'formats': ['markdown']})
+            
+            # Extract markdown content
+            content = scrape_result.get('markdown', '')
+            
+            if not content:
+                print(f"⚠️ Warning: No content returned for {url}")
+                return ""
 
-print(f"Starting crawl for: {url}")
+            print(f"✅ Successfully scraped {len(content)} characters.")
+            return f"\n--- SOURCE: {url} ---\n{content}"
+            
+        except Exception as e:
+            print(f"❌ Failed to scrape {url}: {e}")
+            return ""
 
-# 2. Use the new 'crawl' method
-# Note: In the new SDK, arguments like 'limit' are passed directly
-crawl_result = app.crawl(
-    url,
-    limit=10,
-    scrape_options={
-        'formats': ['markdown'] 
-    }
-)
-
-# 3. Save to disk (The structure of the result is slightly different now)
-# The data is usually inside 'data' or the object itself is iterable depending on the specific sub-version.
-# We convert it to a dict/list for safe saving.
-
-try:
-    # If the result is an object, we try to access its 'data' attribute
-    data_to_save = crawl_result.get('data', []) if isinstance(crawl_result, dict) else crawl_result.data
-except AttributeError:
-    # Fallback if the structure is raw
-    data_to_save = crawl_result
-
-# with open("/home/paritosh/hybrid_bot/data/scraped_data.json", "w", encoding="utf-8") as f:
-#     # default=str helps serialize objects that JSON doesn't know how to handle
-#     json.dump(data_to_save, f, indent=4, ensure_ascii=False, default=str)
-
-# save to vector db as json
-
-print("Saved data to scraped_data.json")
+# Test
+if __name__ == "__main__":
+    try:
+        scraper = WebScraper()
+        print(scraper.scrape_page("https://example.com"))
+    except Exception as e:
+        print(e)

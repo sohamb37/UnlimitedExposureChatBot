@@ -8,6 +8,9 @@ class Settings:
     API_PROVIDER = os.getenv("API_PROVIDER", "openai").lower()
     API_KEY = os.getenv("API_KEY", "")
     BASE_URL = os.getenv("BASE_URL", None) 
+
+    # --- FIRECRAWL CONFIG ---
+    FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY", "")
     
     # Models
     # Ensure your chosen provider supports embeddings! 
