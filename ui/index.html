@@ -32,7 +32,7 @@
     </div>
     <div class="chat-box" id="chat-box">
         <div class="message bot-msg">
-            Hello! I am your AI assistant. Ask me about our menu, hours, or prices!
+            Hello! I am your RustCheck AI assistant. Ask me anything you want!
         </div>
     </div>
     <div class="input-area">
@@ -114,3 +114,51 @@
 
 </body>
 </html>
+
+<!-- <!DOCTYPE html>
+<html>
+<head>
+  <title>Chatbot Demo</title>
+  <style>
+    body { font-family: Arial; max-width: 600px; margin: 40px auto; }
+    #chat { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: auto; }
+    .user { color: blue; margin: 5px 0; }
+    .bot { color: green; margin: 5px 0; }
+    input { width: 80%; padding: 8px; }
+    button { padding: 8px; }
+  </style>
+</head>
+<body>
+
+<h2>Hybrid FAQ + RAG Chatbot</h2>
+
+<div id="chat"></div>
+
+<input id="msg" placeholder="Ask a question..." />
+<button onclick="send()">Send</button>
+
+<script>
+async function send() {
+  const input = document.getElementById("msg");
+  const chat = document.getElementById("chat");
+  const message = input.value.trim();
+  if (!message) return;
+
+  chat.innerHTML += `<div class="user"><b>You:</b> ${message}</div>`;
+  input.value = "";
+
+  const res = await fetch("http://127.0.0.1:8000/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message })
+  });
+
+  const data = await res.json();
+  chat.innerHTML += `<div class="bot"><b>Bot:</b> ${data.response}</div>`;
+  chat.scrollTop = chat.scrollHeight;
+}
+</script>
+
+</body>
+</html> -->
+

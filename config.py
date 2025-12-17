@@ -32,4 +32,8 @@ class Settings:
     # Paths
     FAQ_FILE_PATH = os.path.join("data", "faq.json")
 
+    # --- CONVERSATION MEMORY ---
+    # Number of recent turns (User + Assistant pairs) to include in context
+    MAX_HISTORY_TURNS = 4
+
 settings = Settings()
